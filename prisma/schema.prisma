@@ -7,6 +7,7 @@
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -15,7 +16,6 @@ datasource db {
 
 model User {
   id        Int      @default(autoincrement()) @id
-  name      String
   email     String   @unique
   password  String?
   order     Order[]
@@ -27,7 +27,7 @@ model User {
 
 model Order {
   id Int @id @default(autoincrement()) 
-  user User? @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int?
   orderProduct OrderProduct[]
   createdAt DateTime @default(now()) @map("created_at")
@@ -39,6 +39,11 @@ model Order {
 model Product {
   id Int @id @default(autoincrement())
   orderProduct OrderProduct[]
+  title String
+  description String? @db.VarChar(255)
+  price Decimal @db.Decimal(10, 2)
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  brandId Int?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -46,10 +51,20 @@ model Product {
 }
 
 model OrderProduct {
-  order Order? @relation(fields: [orderId], references: [id])
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId Int
-  product Product? @relation(fields: [productId], references: [id])
+  product Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int
   @@id([orderId, productId])
   @@map("order_products")
+}
+
+model Brand{
+  id Int @id @default(autoincrement())
+  title String
+  product Product[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("brands")
 }
