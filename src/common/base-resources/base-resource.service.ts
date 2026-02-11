@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaModel } from '../enums/prisma-model.enum';
 
 @Injectable()
 export class BaseResourceService {
