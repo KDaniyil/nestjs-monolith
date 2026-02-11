@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import Redis from 'ioredis';
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
+  ) {}
 
   async create(dto: CreateOrderDto) {
     const { userId, orderProduct } = dto;
+
+    await this.redis.del('orders_all');
+
     const order = await this.prisma.order.create({
       data: {
         user: {
@@ -27,7 +34,14 @@ export class OrderService {
   }
 
   async findAll() {
-    return this.prisma.order.findMany({
+    const cacheKey = 'orders_all';
+    const cachedData = await this.redis.get(cacheKey);
+
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+
+    const orders = this.prisma.order.findMany({
       include: {
         orderProduct: {
           include: {
@@ -37,6 +51,10 @@ export class OrderService {
         user: true,
       },
     });
+
+    await this.redis.setex(cacheKey, 3600, JSON.stringify(orders));
+
+    return orders;
   }
 
   async findOne(id: number) {
