@@ -5,7 +5,7 @@ import { PrismaModel } from '../enums/prisma-model.enum';
 @Injectable()
 export class BaseResourceService {
   constructor(
-    private readonly prisma: PrismaService,
+    protected readonly prisma: PrismaService,
     private readonly model: string,
   ) {}
 
